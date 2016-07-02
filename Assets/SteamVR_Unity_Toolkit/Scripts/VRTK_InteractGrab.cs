@@ -91,10 +91,16 @@ namespace VRTK
             //If no attach point has been specified then just use the tip of the controller
             if (controllerAttachPoint == null)
             {
-                controllerAttachPoint = transform.GetChild(0).Find("tip").GetChild(0).GetComponent<Rigidbody>();
-            }
+				// controllerAttachPoint = transform.GetChild(0).Find("tip").GetChild(0).GetComponent<Rigidbody>();
+				// start https://github.com/thestonefox/SteamVR_Unity_Toolkit/pull/135/
+				var attachObject = transform.Find("Model/tip/attach");
+				if (attachObject != null) {
+					controllerAttachPoint = attachObject.GetComponent<Rigidbody>();
+				}
+				// end
+			}
 
-            if (GetComponent<VRTK_ControllerEvents>() == null)
+			if (GetComponent<VRTK_ControllerEvents>() == null)
             {
                 Debug.LogError("VRTK_InteractGrab is required to be attached to a SteamVR Controller that has the VRTK_ControllerEvents script attached to it");
                 return;
@@ -455,7 +461,13 @@ namespace VRTK
 
         private void Update()
         {
-            if (grabPrecognitionTimer > 0)
+			// start https://github.com/thestonefox/SteamVR_Unity_Toolkit/pull/135/
+			if (controllerAttachPoint == null) {
+				SetupControllerAttachPoint();
+			}
+			// end
+
+			if (grabPrecognitionTimer > 0)
             {
                 grabPrecognitionTimer--;
                 if (GetGrabbableObject() != null)
@@ -464,5 +476,24 @@ namespace VRTK
                 }
             }
         }
-    }
+
+		// start https://github.com/thestonefox/SteamVR_Unity_Toolkit/pull/135/
+		private void SetupControllerAttachPoint() {
+			var child = transform.Find("Model/tip/attach");
+			if (child != null) {
+				var rigidBody = child.GetComponent<Rigidbody>();
+				if (rigidBody == null) {
+					rigidBody = child.gameObject.AddComponent<Rigidbody>();
+				}
+
+
+				if (rigidBody != null) {
+					rigidBody.isKinematic = true;
+
+					controllerAttachPoint = rigidBody;
+				}
+			}
+		}
+		// end
+	}
 }
