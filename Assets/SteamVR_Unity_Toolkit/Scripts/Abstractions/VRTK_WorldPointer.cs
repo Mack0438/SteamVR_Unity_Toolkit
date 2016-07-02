@@ -240,10 +240,10 @@ namespace VRTK
 
         protected virtual bool ValidDestination(Transform target)
         {
-            return (target && target.tag != invalidTargetWithTagOrClass && target.GetComponent(invalidTargetWithTagOrClass) == null);
-        }
+			return (target && (target.tag == invalidTargetWithTagOrClass || target.GetComponent(invalidTargetWithTagOrClass) != null)); // CHANGED!
+		}
 
-        private void DrawPlayAreaCursorBoundary(int index, float left, float right, float top, float bottom, float thickness, Vector3 localPosition)
+		private void DrawPlayAreaCursorBoundary(int index, float left, float right, float top, float bottom, float thickness, Vector3 localPosition)
         {
             var playAreaCursorBoundary = GameObject.CreatePrimitive(PrimitiveType.Cube);
             playAreaCursorBoundary.name = string.Format("[{0}]PlayerObject_WorldPointer_PlayAreaCursorBoundary_" + index, this.gameObject.name);
