@@ -267,10 +267,18 @@
             {
                 if (touchDown)
                 {
-                    pointerPressed = true;
-                    OnAliasPointerOn(SetButtonEvent(ref buttonBool, true, buttonPressure));
-                }
-                else
+					// start of change
+					if (pointerToggleButton == ButtonAlias.Touchpad_Press) {
+						if (touchpadAxis.y >= 0) {
+							pointerPressed = true;
+							OnAliasPointerOn(SetButtonEvent(ref buttonBool, true, buttonPressure));
+						}
+					} else {
+						pointerPressed = true;
+						OnAliasPointerOn(SetButtonEvent(ref buttonBool, true, buttonPressure));
+					}
+					// end
+				} else
                 {
                     pointerPressed = false;
                     OnAliasPointerOff(SetButtonEvent(ref buttonBool, false, buttonPressure));
