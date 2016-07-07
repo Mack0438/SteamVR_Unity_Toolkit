@@ -25,7 +25,8 @@
 
         private void Start()
         {
-            this.name = "PlayerObject_" + this.name;
+            Utilities.SetPlayerObject(this.gameObject, VRTK_PlayerObject.ObjectTypes.CameraRig);
+
             lastGoodPositionSet = false;
             headset = DeviceFinder.HeadsetTransform();
             CreateCollider();
@@ -76,7 +77,7 @@
             bc.center = new Vector3(0f, 1f, 0f);
             bc.size = new Vector3(0.25f, 1f, 0.25f);
 
-            this.gameObject.layer = 2;
+            this.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
         }
 
         private void UpdateCollider()

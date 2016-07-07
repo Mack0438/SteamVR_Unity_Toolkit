@@ -88,19 +88,7 @@ namespace VRTK
 
         private void Start()
         {
-            //If no attach point has been specified then just use the tip of the controller
-            if (controllerAttachPoint == null)
-            {
-				// controllerAttachPoint = transform.GetChild(0).Find("tip").GetChild(0).GetComponent<Rigidbody>();
-				// start https://github.com/thestonefox/SteamVR_Unity_Toolkit/pull/135/
-				var attachObject = transform.Find("Model/tip/attach");
-				if (attachObject != null) {
-					controllerAttachPoint = attachObject.GetComponent<Rigidbody>();
-				}
-				// end
-			}
-
-			if (GetComponent<VRTK_ControllerEvents>() == null)
+            if (GetComponent<VRTK_ControllerEvents>() == null)
             {
                 Debug.LogError("VRTK_InteractGrab is required to be attached to a SteamVR Controller that has the VRTK_ControllerEvents script attached to it");
                 return;
@@ -108,6 +96,29 @@ namespace VRTK
 
             GetComponent<VRTK_ControllerEvents>().AliasGrabOn += new ControllerInteractionEventHandler(DoGrabObject);
             GetComponent<VRTK_ControllerEvents>().AliasGrabOff += new ControllerInteractionEventHandler(DoReleaseObject);
+
+            SetControllerAttachPoint();
+        }
+
+        private void SetControllerAttachPoint()
+        {
+            //If no attach point has been specified then just use the tip of the controller
+            if (controllerAttachPoint == null)
+            {
+                //attempt to find the attach point on the controller
+                var defaultAttachPoint = transform.Find("Model/tip/attach");
+                if (defaultAttachPoint != null)
+                {
+                    controllerAttachPoint = defaultAttachPoint.GetComponent<Rigidbody>();
+
+                    if (controllerAttachPoint == null)
+                    {
+                        var autoGenRB = defaultAttachPoint.gameObject.AddComponent<Rigidbody>();
+                        autoGenRB.isKinematic = true;
+                        controllerAttachPoint = autoGenRB;
+                    }
+                }
+            }
         }
 
         private bool IsObjectGrabbable(GameObject obj)
@@ -170,7 +181,7 @@ namespace VRTK
             //Pause collisions (if allowed on object) for a moment whilst sorting out position to prevent clipping issues
             objectScript.PauseCollisions();
 
-            if(! objectScript.precisionSnap)
+            if (!objectScript.precisionSnap)
             {
                 SetSnappedObjectPosition(obj);
             }
@@ -198,7 +209,7 @@ namespace VRTK
                 SpringJoint tempSpringJoint = obj.AddComponent<SpringJoint>();
                 tempSpringJoint.spring = objectScript.springJointStrength;
                 tempSpringJoint.damper = objectScript.springJointDamper;
-                if(objectScript.precisionSnap)
+                if (objectScript.precisionSnap)
                 {
                     tempSpringJoint.anchor = obj.transform.InverseTransformPoint(controllerAttachPoint.position);
                 }
@@ -265,7 +276,7 @@ namespace VRTK
             if (controllerAttachJoint == null && grabbedObject == null && IsObjectGrabbable(interactTouch.GetTouchedObject()))
             {
                 InitGrabbedObject();
-                if(grabbedObject)
+                if (grabbedObject)
                 {
                     SnapObjectToGrabToController(grabbedObject);
                     return true;
@@ -461,13 +472,12 @@ namespace VRTK
 
         private void Update()
         {
-			// start https://github.com/thestonefox/SteamVR_Unity_Toolkit/pull/135/
-			if (controllerAttachPoint == null) {
-				SetupControllerAttachPoint();
-			}
-			// end
+            if(controllerAttachPoint == null)
+            {
+                SetControllerAttachPoint();
+            }
 
-			if (grabPrecognitionTimer > 0)
+            if (grabPrecognitionTimer > 0)
             {
                 grabPrecognitionTimer--;
                 if (GetGrabbableObject() != null)
@@ -476,24 +486,5 @@ namespace VRTK
                 }
             }
         }
-
-		// start https://github.com/thestonefox/SteamVR_Unity_Toolkit/pull/135/
-		private void SetupControllerAttachPoint() {
-			var child = transform.Find("Model/tip/attach");
-			if (child != null) {
-				var rigidBody = child.GetComponent<Rigidbody>();
-				if (rigidBody == null) {
-					rigidBody = child.gameObject.AddComponent<Rigidbody>();
-				}
-
-
-				if (rigidBody != null) {
-					rigidBody.isKinematic = true;
-
-					controllerAttachPoint = rigidBody;
-				}
-			}
-		}
-		// end
-	}
+    }
 }

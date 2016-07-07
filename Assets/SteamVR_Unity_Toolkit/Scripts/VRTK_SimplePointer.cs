@@ -51,26 +51,29 @@ namespace VRTK
 
         protected override void InitPointer()
         {
-            pointerHolder = new GameObject(string.Format("[{0}]PlayerObject_WorldPointer_SimplePointer_Holder", this.gameObject.name));
+            pointerHolder = new GameObject(string.Format("[{0}]WorldPointer_SimplePointer_Holder", this.gameObject.name));
+            Utilities.SetPlayerObject(pointerHolder, VRTK_PlayerObject.ObjectTypes.Pointer);
             pointerHolder.transform.parent = this.transform;
             pointerHolder.transform.localPosition = Vector3.zero;
 
             pointer = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            pointer.transform.name = string.Format("[{0}]PlayerObject_WorldPointer_SimplePointer_Pointer", this.gameObject.name);
+            pointer.transform.name = string.Format("[{0}]WorldPointer_SimplePointer_Pointer", this.gameObject.name);
+            Utilities.SetPlayerObject(pointer, VRTK_PlayerObject.ObjectTypes.Pointer);
             pointer.transform.parent = pointerHolder.transform;
 
             pointer.GetComponent<BoxCollider>().isTrigger = true;
             pointer.AddComponent<Rigidbody>().isKinematic = true;
-            pointer.layer = 2;
+            pointer.layer = LayerMask.NameToLayer("Ignore Raycast");
 
             pointerTip = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            pointerTip.transform.name = string.Format("[{0}]PlayerObject_WorldPointer_SimplePointer_PointerTip", this.gameObject.name);
+            pointerTip.transform.name = string.Format("[{0}]WorldPointer_SimplePointer_PointerTip", this.gameObject.name);
+            Utilities.SetPlayerObject(pointerTip, VRTK_PlayerObject.ObjectTypes.Pointer);
             pointerTip.transform.parent = pointerHolder.transform;
             pointerTip.transform.localScale = pointerTipScale;
 
             pointerTip.GetComponent<SphereCollider>().isTrigger = true;
             pointerTip.AddComponent<Rigidbody>().isKinematic = true;
-            pointerTip.layer = 2;
+            pointerTip.layer = LayerMask.NameToLayer("Ignore Raycast");
 
             base.InitPointer();
 

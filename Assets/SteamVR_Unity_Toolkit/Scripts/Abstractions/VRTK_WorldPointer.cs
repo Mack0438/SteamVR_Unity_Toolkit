@@ -66,7 +66,6 @@ namespace VRTK
 
         protected virtual void Start()
         {
-
             if (controller == null)
             {
                 controller = this.GetComponent<VRTK_ControllerEvents>();
@@ -78,7 +77,7 @@ namespace VRTK
                 return;
             }
 
-            this.name = "PlayerObject_" + this.name;
+            Utilities.SetPlayerObject(this.gameObject, VRTK_PlayerObject.ObjectTypes.Controller);
 
             //Setup controller event listeners
             controller.AliasPointerOn += new ControllerInteractionEventHandler(EnablePointerBeam);
@@ -128,9 +127,13 @@ namespace VRTK
 
         protected virtual void SetPlayAreaCursorTransform(Vector3 destination)
         {
-            var playAreaPos = new Vector3(playArea.transform.position.x, 0, playArea.transform.position.z);
-            var headsetPos = new Vector3(headset.position.x, 0, headset.position.z);
-            var offset = playAreaPos - headsetPos;
+            var offset = Vector3.zero;
+            if(headsetPositionCompensation)
+            {
+                var playAreaPos = new Vector3(playArea.transform.position.x, 0, playArea.transform.position.z);
+                var headsetPos = new Vector3(headset.position.x, 0, headset.position.z);
+                offset = playAreaPos - headsetPos;
+            }
             playAreaCursor.transform.position = destination + offset;
         }
 
@@ -240,13 +243,24 @@ namespace VRTK
 
         protected virtual bool ValidDestination(Transform target)
         {
-			return (target && (target.tag == invalidTargetWithTagOrClass || target.GetComponent(invalidTargetWithTagOrClass) != null)); // CHANGED!
-		}
+            bool validNavMeshLocation = false;
+            if (target)
+            {
+                NavMeshHit hit;
+                validNavMeshLocation = NavMesh.SamplePosition(target.position, out hit, 1.0f, NavMesh.AllAreas);
+            }
+            if(!checkNavMesh)
+            {
+                validNavMeshLocation = true;
+            }
+            return (validNavMeshLocation && target && target.tag != invalidTargetWithTagOrClass && target.GetComponent(invalidTargetWithTagOrClass) == null);
+        }
 
-		private void DrawPlayAreaCursorBoundary(int index, float left, float right, float top, float bottom, float thickness, Vector3 localPosition)
+        private void DrawPlayAreaCursorBoundary(int index, float left, float right, float top, float bottom, float thickness, Vector3 localPosition)
         {
             var playAreaCursorBoundary = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            playAreaCursorBoundary.name = string.Format("[{0}]PlayerObject_WorldPointer_PlayAreaCursorBoundary_" + index, this.gameObject.name);
+            playAreaCursorBoundary.name = string.Format("[{0}]WorldPointer_PlayAreaCursorBoundary_" + index, this.gameObject.name);
+            Utilities.SetPlayerObject(playAreaCursorBoundary, VRTK_PlayerObject.ObjectTypes.Pointer);
 
             var width = (right - left) / 1.065f;
             var length = (top - bottom) / 1.08f;
@@ -254,7 +268,7 @@ namespace VRTK
 
             playAreaCursorBoundary.transform.localScale = new Vector3(width, height, length);
             Destroy(playAreaCursorBoundary.GetComponent<BoxCollider>());
-            playAreaCursorBoundary.layer = 2;
+            playAreaCursorBoundary.layer = LayerMask.NameToLayer("Ignore Raycast");
 
             playAreaCursorBoundary.transform.parent = playAreaCursor.transform;
             playAreaCursorBoundary.transform.localPosition = localPosition;
@@ -296,7 +310,8 @@ namespace VRTK
             var height = 0.01f;
 
             playAreaCursor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            playAreaCursor.name = string.Format("[{0}]PlayerObject_WorldPointer_PlayAreaCursor", this.gameObject.name);
+            playAreaCursor.name = string.Format("[{0}]WorldPointer_PlayAreaCursor", this.gameObject.name);
+            Utilities.SetPlayerObject(playAreaCursor, VRTK_PlayerObject.ObjectTypes.Pointer);
             playAreaCursor.transform.parent = null;
             playAreaCursor.transform.localScale = new Vector3(width, height, length);
             playAreaCursor.SetActive(false);
@@ -309,7 +324,7 @@ namespace VRTK
 
             var playAreaCursorScript = playAreaCursor.AddComponent<VRTK_PlayAreaCollider>();
             playAreaCursorScript.SetParent(this.gameObject);
-            playAreaCursor.layer = 2;
+            playAreaCursor.layer = LayerMask.NameToLayer("Ignore Raycast");
 
             var playAreaBoundaryX = playArea.transform.localScale.x / 2;
             var playAreaBoundaryZ = playArea.transform.localScale.z / 2;
@@ -351,7 +366,7 @@ namespace VRTK
 
         private void OnTriggerStay(Collider collider)
         {
-            if (parent.GetComponent<VRTK_WorldPointer>().IsActive() && !collider.name.Contains("PlayerObject_"))
+            if (parent.GetComponent<VRTK_WorldPointer>().IsActive() && !collider.GetComponent<VRTK_PlayerObject>())
             {
                 parent.GetComponent<VRTK_WorldPointer>().setPlayAreaCursorCollision(true);
             }
@@ -359,7 +374,7 @@ namespace VRTK
 
         private void OnTriggerExit(Collider collider)
         {
-            if (!collider.name.Contains("PlayerObject_"))
+            if (!collider.GetComponent<VRTK_PlayerObject>())
             {
                 parent.GetComponent<VRTK_WorldPointer>().setPlayAreaCursorCollision(false);
             }
